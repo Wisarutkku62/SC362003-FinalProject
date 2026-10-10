@@ -1,0 +1,282 @@
+:root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #f4f6fb;
+    --card: #fff;
+    --tx: #1b2033;
+    --mut: #667089;
+    --bd: #e1e5f0;
+    --pri: #4f46e5;
+    --good: #16a34a;
+    --fair: #f59e0b;
+    --poor: #dc2626;
+}
+
+html {
+    scroll-padding-top: env(safe-area-inset-top, 0px)
+}
+
+@media (prefers-color-scheme:dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #0f1220;
+        --card: #181c30;
+        --tx: #e8eaf5;
+        --mut: #9aa3c0;
+        --bd: #2a3050;
+        --pri: #818cf8;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #0f1220;
+    --card: #181c30;
+    --tx: #e8eaf5;
+    --mut: #9aa3c0;
+    --bd: #2a3050;
+    --pri: #818cf8
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--tx);
+    font-family: system-ui, -apple-system, "Noto Sans Thai", sans-serif;
+    line-height: 1.5
+}
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px
+}
+
+h1 {
+    font-size: 1.4rem;
+    margin: 0
+}
+
+h2 {
+    font-size: 1rem;
+    margin: 0 0 10px
+}
+
+.sub {
+    color: var(--mut);
+    font-size: .9rem;
+    margin: 2px 0 14px
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--bd);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px
+}
+
+.grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1fr 1fr
+}
+
+@media(max-width:700px) {
+    .grid {
+        grid-template-columns: 1fr
+    }
+}
+
+.opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+}
+
+.opt {
+    border: 1px solid var(--bd);
+    background: var(--bg);
+    color: var(--tx);
+    padding: 9px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit
+}
+
+.opt.on {
+    background: var(--pri);
+    color: #fff;
+    border-color: var(--pri)
+}
+
+.go {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border: 0;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--pri);
+    cursor: pointer
+}
+
+.go.stop {
+    background: var(--poor)
+}
+
+.banner {
+    display: none;
+    background: #fef3c7;
+    color: #78350f;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: .85rem;
+    margin-bottom: 14px
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px
+}
+
+.m {
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 8px 10px
+}
+
+.m small {
+    color: var(--mut)
+}
+
+.m b {
+    display: block;
+    font-size: 1.25rem
+}
+
+.good {
+    color: var(--good)
+}
+
+.fair {
+    color: var(--fair)
+}
+
+.poor {
+    color: var(--poor)
+}
+
+.gauge {
+    text-align: center
+}
+
+.gauge svg {
+    width: 220px;
+    max-width: 100%
+}
+
+canvas {
+    width: 100%;
+    height: 150px;
+    display: block
+}
+
+ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: .88rem
+}
+
+#ev {
+    max-height: 140px;
+    overflow: auto
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 99px;
+    color: #fff;
+    font-weight: 700
+}
+
+.tag.good {
+    background: var(--good);
+    color: #fff
+}
+
+.tag.fair {
+    background: var(--fair);
+    color: #fff
+}
+
+.tag.poor {
+    background: var(--poor);
+    color: #fff
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+    overflow-x: auto;
+    display: block
+}
+
+td,
+th {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--bd);
+    text-align: left;
+    white-space: nowrap
+}
+
+.hide {
+    display: none
+}
+
+.bar {
+    height: 10px;
+    background: var(--bd);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 6px 0
+}
+
+.bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--pri);
+    transition: width .5s
+}
+
+.hgrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px
+}
+
+.cell {
+    white-space: pre;
+    min-height: 68px;
+    border: 2px solid var(--bd);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--tx);
+    font: inherit;
+    cursor: pointer
+}
+
+@media print {
+    button {
+        display: none !important
+    }
+}

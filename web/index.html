@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>QoS/QoE Analytics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main>
+        <h1> QoS/QoE Analytics</h1>
+        <p class="sub">Measure. Understand. Explain. Recommend. — วิเคราะห์คุณภาพการใช้งานแอปจากประสบการณ์จริง
+            พร้อมอธิบายสาเหตุจากเครือข่าย</p>
+        <p><a href="dashboard.html" target="_blank">📺 เปิด Live Dashboard (ดูทุกเครื่องที่กำลังทดสอบพร้อมกัน)</a></p>
+        <div class="banner" id="simBanner">⚠️ ไม่สามารถวัดเครือข่ายจริงในหน้านี้ได้ — กำลังใช้ข้อมูลจำลองเพื่อสาธิต
+            (นำไปโฮสต์บนเซิร์ฟเวอร์ของคุณเพื่อวัดจริง)</div>
+
+        <section class="card">
+            <h2>1. เลือกแอปพลิเคชันและประเภทการทดสอบ</h2>
+            <div class="opts" id="apps"></div>
+            <div class="opts" id="types" style="margin-top:10px"></div>
+            <input id="cname" placeholder="ชื่อเครื่องนี้ (เช่น โน้ตบุ๊ก-ห้อง2)" maxlength="30"
+                style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit">
+            <button class="go" id="btn">เริ่มทดสอบ</button>
+        </section>
+
+        <section id="live" class="hide">
+            <div class="grid">
+                <div class="card gauge">
+                    <h2>2. Live Analytics — QoE Score</h2>
+                    <svg viewBox="0 0 120 75">
+                        <path d="M10 62A50 50 0 0 1 110 62" fill="none" stroke="var(--bd)" stroke-width="10"
+                            stroke-linecap="round" />
+                        <path id="arc" d="M10 62A50 50 0 0 1 110 62" fill="none" stroke="var(--good)" stroke-width="10"
+                            stroke-linecap="round" stroke-dasharray="157.1" stroke-dashoffset="157.1" />
+                        <text id="sc" x="60" y="52" text-anchor="middle" font-size="24" font-weight="700"
+                            fill="currentColor">--</text>
+                        <text id="rt" x="60" y="68" text-anchor="middle" font-size="9"
+                            fill="currentColor">รอข้อมูล</text>
+                    </svg>
+                    <div id="prof" class="sub"></div>
+                </div>
+                <div class="card">
+                    <h2>เมตริกแบบเรียลไทม์</h2>
+                    <div class="metrics">
+                        <div class="m"><small>RTT (ms)</small><b id="mRtt">-</b></div>
+                        <div class="m"><small>Jitter (ms)</small><b id="mJit">-</b></div>
+                        <div class="m"><small>Packet Loss (%)</small><b id="mLoss">-</b></div>
+                        <div class="m"><small>Throughput (Mbps)</small><b id="mTp">-</b></div>
+                    </div>
+                    <p class="sub" id="net" style="margin:8px 0 0"></p>
+                </div>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h2>RTT ตามเวลา</h2><canvas id="chart"></canvas>
+                </div>
+                <div class="card" id="mapCard">
+                    <h2>Mobility Map (A→B)</h2><canvas id="map"></canvas>
+                    <p class="sub" id="gpsNote" style="margin:4px 0 0"></p>
+                </div>
+            </div>
+            <div class="card">
+                <h2>QoE Insights — ประสบการณ์ที่ผู้ใช้จะรู้สึก</h2>
+                <div class="grid">
+                    <div><small>🎧 คุณภาพเสียงโทร (MOS จาก E-model)</small><b id="mMos"
+                            style="font-size:1.7rem;display:block">-</b><small id="mR"></small></div>
+                    <div><small>🎬 จำลองเล่นวิดีโอ 3.5 Mbps: <b id="vState">-</b></small>
+                        <div class="bar"><i id="vBar"></i></div>
+                        <small>เริ่มเล่นใน <b id="vStartup">-</b> วิ · ค้าง <b id="vStall">0</b> ครั้ง · รวม <b
+                                id="vStallT">0</b> วิ</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Event List</h2>
+                <ul id="ev"></ul>
+            </div>
+        </section>
+
+        <section id="result" class="card hide">
+            <h2>3. Diagnosis / Result</h2>
+            <div>Overall: <span class="tag" id="rTag"></span> <b id="rScore"></b></div>
+            <p><b>ปัญหาหลัก:</b> <span id="rMain"></span></p>
+            <p><b>หลักฐาน:</b></p>
+            <ul id="rEvi"></ul>
+            <p><b>คำแนะนำ:</b> <span id="rRec"></span></p>
+            <div id="zones"></div>
+            <button class="opt" id="copy">คัดลอกรายงาน (JSON)</button> <span class="sub" id="copied"></span>
+        </section>
+
+        <section class="card">
+            <h2>🗺️ Wi-Fi Heatmap (ผังห้อง)</h2>
+            <p class="sub" style="margin-top:0">ถือเครื่องเดินไปแต่ละจุดของห้อง คลิกช่องที่ตรงกับตำแหน่ง แล้วกดวัด
+                สีบอกคุณภาพจุดนั้น (เขียว=Good เหลือง=Fair แดง=Poor) ใช้แอปที่เลือกด้านบนเป็นเกณฑ์</p>
+            <div id="heatGrid" class="hgrid"></div>
+            <div class="opts" style="margin-top:10px"><button class="go" id="heatBtn"
+                    style="width:auto;margin:0;padding:10px 18px">วัดช่องที่เลือก (10 วินาที)</button><button
+                    class="opt" id="heatClr">ล้างแผนที่</button></div>
+            <p id="heatOut" class="sub"></p>
+        </section>
+        <section class="card">
+            <h2>🧰 เครื่องมือเครือข่าย</h2>
+            <div class="opts">
+                <button class="opt" id="upBtn">วัดความเร็วอัปโหลด</button><button class="opt"
+                    id="bdBtn">แยกส่วนความหน่วง</button>
+                <button class="opt" id="trClient">Traceroute → เครื่องผู้ใช้</button><button class="opt"
+                    id="trNet">Traceroute → อินเทอร์เน็ต</button><button class="opt" id="prBtn">พิมพ์ / บันทึก
+                    PDF</button>
+            </div>
+            <pre id="toolOut" style="white-space:pre-wrap;font-size:.82rem;overflow-x:auto;margin:10px 0 0"></pre>
+        </section>
+        <section class="grid">
+            <div class="card">
+                <h2>🔬 Bufferbloat Test</h2>
+                <p class="sub" style="margin-top:0">วัดว่า RTT พุ่งแค่ไหนเมื่อเครือข่ายถูกโหลดเต็ม (ใช้เวลา 13 วินาที)
+                </p><button class="go" id="bloatBtn">เริ่มทดสอบ Bufferbloat</button>
+                <p id="bloatOut"></p>
+            </div>
+            <div class="card">
+                <h2>📊 ประวัติและเปรียบเทียบ Local vs Internet</h2><button class="go"
+                    id="histBtn">โหลดประวัติผลทดสอบ</button>
+                <div id="histOut" style="overflow-x:auto"></div>
+            </div>
+        </section>
+        <section class="card">
+            <h2>เกณฑ์ QoS ตามประเภทแอป (ปรับได้ในโค้ด)</h2>
+            <table>
+                <tr>
+                    <th>แอป</th>
+                    <th>ตัวชี้วัด</th>
+                    <th>Good</th>
+                    <th>Fair</th>
+                    <th>Poor</th>
+                </tr>
+                <tr>
+                    <td>Video Streaming</td>
+                    <td>Throughput, Loss, RTT</td>
+                    <td>≥ 3.5 Mbps, loss &lt;1%</td>
+                    <td>70–100% ของ bitrate</td>
+                    <td>&lt;70% bitrate</td>
+                </tr>
+                <tr>
+                    <td>Voice/Video Call</td>
+                    <td>RTT, Jitter, Loss</td>
+                    <td>&lt;150 ms, &lt;30 ms, &lt;1%</td>
+                    <td>150–250, 30–50, 1–3%</td>
+                    <td>เกินกว่านั้น</td>
+                </tr>
+                <tr>
+                    <td>Online Gaming</td>
+                    <td>RTT, Jitter, Loss</td>
+                    <td>&lt;80 ms, &lt;20 ms, &lt;1%</td>
+                    <td>80–150, 20–50, 1–3%</td>
+                    <td>เกินกว่านั้น</td>
+                </tr>
+                <tr>
+                    <td>File Transfer</td>
+                    <td>Throughput, Loss, RTT</td>
+                    <td>≥ 8 Mbps</td>
+                    <td>4–8 Mbps</td>
+                    <td>&lt;4 Mbps</td>
+                </tr>
+            </table>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
