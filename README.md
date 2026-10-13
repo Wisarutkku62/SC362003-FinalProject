@@ -1,4 +1,4 @@
-# Mobile QoS/QoE Analytics (Web App)
+# QoS/QoE Analytics (Web App)
 
 วัดคุณภาพเครือข่ายจากมือถือ → แปลงเป็นคะแนน QoE ตามประเภทแอป → อธิบายสาเหตุ + แนะนำ
 
