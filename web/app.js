@@ -1,4 +1,4 @@
-// ---------- config ----------
+//config 
 const PROFILES = {
   video: { n: 'Video Streaming', m: { tp: [3.5, 2.45, 'hi', .5], loss: [1, 3, 'lo', .25], rtt: [150, 250, 'lo', .25] } },
   call: { n: 'Voice / Video Call', m: { rtt: [150, 250, 'lo', .4], jit: [30, 50, 'lo', .3], loss: [1, 3, 'lo', .3] } },
@@ -17,7 +17,7 @@ let prof = 'video', type = 'net', S = null, timer = null;
 const $ = id => document.getElementById(id);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-// ---------- UI ----------
+// UI
 function chips(el, obj, get, set) {
   el.innerHTML = ''; Object.keys(obj).forEach(k => {
     const b = document.createElement('button'); b.className = 'opt' + (get() === k ? ' on' : '');
@@ -28,8 +28,8 @@ function render() { chips($('apps'), PROFILES, () => prof, k => prof = k); chips
 render();
 $('btn').onclick = () => S ? stop() : start();
 
-// ---------- scoring ----------
-function metricScore(v, [g, f, d]) { // ที่เกณฑ์ Good = 70, ที่เกณฑ์ Fair = 50 (ตรงกับ rate())
+//  scoring
+function metricScore(v, [g, f, d]) { 
   if (d === 'lo') { if (v <= g) return 100 - 30 * v / g; if (v <= f) return 70 - 20 * (v - g) / (f - g); return Math.max(5, 50 - 50 * (v - f) / f) }
   if (v >= g) return Math.min(100, 70 + 30 * (v - g) / g); if (v >= f) return 50 + 20 * (v - f) / (g - f); return Math.max(5, 50 * v / f)
 }
@@ -43,7 +43,7 @@ function qoe(m, p) {
   return { score: w ? Math.round(sum / w) : null, worst }
 }
 
-// ---------- measurement ----------
+// measurement 
 async function probe() {
   const t = performance.now(), ac = new AbortController(), to = setTimeout(() => ac.abort(), 2000);
   try {
@@ -52,7 +52,7 @@ async function probe() {
   } catch (e) { clearTimeout(to); return null }
 }
 function simSample() {
-  const z = S.zone(); // zone-based degradation to imitate path changes
+  const z = S.zone();
   S.simRtt = Math.max(15, (S.simRtt || 50) * .6 + z.rtt * .4 + (Math.random() - .5) * 14);
   return { rtt: S.simRtt, lost: Math.random() * 100 < z.loss, tp: Math.max(.3, z.tp + (Math.random() - .5) * 1.2) }
 }
@@ -64,7 +64,7 @@ function zoneFn() {
 }
 
 async function bgTp() {
-  const s = S; if (!s || s.tpBusy) return; s.tpBusy = true; // จำ S ของรอบนี้ไว้ เผื่อกดหยุดระหว่างโหลด
+  const s = S; if (!s || s.tpBusy) return; s.tpBusy = true; 
   try {
     const t = performance.now(), r = await fetch('/download?size=600000&_p=' + Date.now(), { cache: 'no-store' });
     const b = await r.arrayBuffer(), sec = (performance.now() - t) / 1000; s.tp = b.byteLength * 8 / 1e6 / sec
@@ -75,11 +75,11 @@ async function tick() {
   if (!S) return;
   let r = null, lost = false, tp = null;
   if (!S.sim) {
-    const v = await probe(); if (!S) return; // กดหยุดระหว่างรอ ping
+    const v = await probe(); if (!S) return;
     if (v == null) { S.fails++; lost = true; if (!S.ok && S.fails >= 3) { S.sim = true; S.win = []; $('simBanner').style.display = 'block' } }
     else { S.ok = true; r = v }
     if (S.n % 4 === 0) bgTp(); S.n++; tp = S.tp ?? null
-  } // ยังไม่ได้วัด = ไม่คิดคะแนนส่วนนี้ (ไม่เอาค่า downlink ที่เบราว์เซอร์เดามาปน)
+  } 
   if (S.sim) { const x = simSample(); r = x.rtt; lost = x.lost; tp = x.tp }
   if (!S) return;
   S.win.push({ r, lost }); if (S.win.length > 20) S.win.shift();
@@ -97,7 +97,7 @@ function ev(text, cls) {
 }
 const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 function detect(x) {
-  if (!S.ok && !S.sim) return; // ยังไม่รู้ว่าเซิร์ฟเวอร์ตอบได้ไหม อย่าเพิ่งแจ้งเหตุการณ์
+  if (!S.ok && !S.sim) return; 
   const c = PROFILES[prof].m, m = x.m, now = x.t;
   for (const k of ['rtt', 'jit', 'loss']) {
     if (!c[k] || m[k] == null) continue;
@@ -109,7 +109,7 @@ function detect(x) {
   S.prev = x.score
 }
 
-// ---------- painting ----------
+//painting
 function paint(x) {
   const m = x.m, c = PROFILES[prof].m;
   const set = (id, k, val, d) => {
@@ -145,7 +145,7 @@ function drawMap() {
   pt(p[0], 'A'); if (p.length > 1) pt(p[p.length - 1], 'B')
 }
 
-// ---------- mobility ----------
+//mobility 
 function startGeo() {
   const note = $('gpsNote');
   const simPath = () => {
@@ -160,7 +160,7 @@ function startGeo() {
   } catch (e) { simPath() }
 }
 
-// ---------- lifecycle ----------
+//lifecycle 
 function start() {
   S = { t0: Date.now(), samples: [], events: [], pos: [], win: [], flag: {}, last: {}, fails: 0, ok: false, sim: false, zone: zoneFn(), prev: null, n: 0, tp: null, v: { buf: 0, play: false, stalls: 0, stallT: 0, startup: null, last: Date.now() } };
   $('simBanner').style.display = 'none'; $('ev').innerHTML = ''; $('result').classList.add('hide'); $('live').classList.remove('hide');
@@ -189,7 +189,6 @@ function stop() {
   [`RTT เฉลี่ย ${am.rtt?.toFixed(0) ?? '-'} ms (สูงสุด ${mx('rtt').toFixed(0)} ms)`, `Jitter เฉลี่ย ${am.jit.toFixed(1)} ms`, `Packet Loss เฉลี่ย ${am.loss.toFixed(1)}% (สูงสุด ${mx('loss').toFixed(1)}%)`,
   am.tp != null ? `Throughput เฉลี่ย ${am.tp.toFixed(1)} Mbps` : null, `เหตุการณ์ผิดปกติ ${s.events.length - 1} ครั้ง`].filter(Boolean).forEach(t => { const li = document.createElement('li'); li.textContent = t; evi.appendChild(li) });
   $('rRec').textContent = r === 'good' ? 'ใช้งานต่อได้ตามปกติ' : REC[w.k];
-  // mobility zones: split into 4 segments
   const z = $('zones'); z.innerHTML = '';
   if (type === 'mob' && d.length >= 8) {
     const n = 4, sz = Math.floor(d.length / n); let h = '<p><b>สรุปตามช่วงเส้นทาง</b></p><table><tr><th>ช่วง</th><th>RTT</th><th>Loss %</th><th>QoE</th></tr>';
@@ -206,8 +205,8 @@ function stop() {
 
 $('copy').onclick = async () => { try { await navigator.clipboard.writeText(JSON.stringify(window._rep, null, 2)); $('copied').textContent = 'คัดลอกแล้ว' } catch (e) { $('copied').textContent = 'คัดลอกไม่ได้ในหน้านี้' } };
 
-// ---------- Insights: MOS (E-model แบบย่อ) + จำลองบัฟเฟอร์วิดีโอ ----------
-function mos(m) { // ประมาณตาม ITU-T G.107: หน่วงชดเชย jitter -> R-factor -> MOS 1-4.5
+//Insights: MOS + จำลองบัฟเฟอร์วิดีโอ 
+function mos(m) {
   if (m.rtt == null) return null;
   const el = m.rtt / 2 + m.jit * 2 + 10;
   let R = el < 160 ? 93.2 - el / 40 : 93.2 - (el - 120) / 10;
@@ -218,7 +217,7 @@ function insights(m) {
   const q = mos(m);
   if (q) { $('mMos').textContent = q.M.toFixed(2) + ' / 4.5'; $('mMos').className = q.M >= 4 ? 'good' : q.M >= 3.1 ? 'fair' : 'poor'; $('mR').textContent = 'R-factor ' + q.R.toFixed(0) }
   const v = S.v, now = Date.now(), dt = Math.min(2, (now - v.last) / 1000); v.last = now;
-  if (m.tp != null) { // เติมบัฟเฟอร์ตามความเร็วที่วัดได้ ลดลงวินาทีละ 1 ขณะเล่น
+  if (m.tp != null) {
     v.buf = Math.min(30, v.buf + dt * m.tp / 3.5);
     if (v.play) { v.buf -= dt; if (v.buf <= 0) { v.buf = 0; v.play = false; v.stalls++ } }
     else if (v.buf >= 2) { v.play = true; if (v.startup == null) v.startup = (now - S.t0) / 1000 }
@@ -229,7 +228,7 @@ function insights(m) {
   $('vStartup').textContent = v.startup == null ? '…' : v.startup.toFixed(1); $('vStall').textContent = v.stalls; $('vStallT').textContent = v.stallT.toFixed(1)
 }
 
-// ---------- Bufferbloat Test: เทียบ RTT ตอนว่าง กับตอนโหลดเต็ม ----------
+//Bufferbloat Test: เทียบ RTT ตอนว่าง กับตอนโหลดเต็ม 
 async function bloat() {
   const out = $('bloatOut'), btn = $('bloatBtn');
   if (S) { out.textContent = 'กดหยุดการทดสอบหลักก่อน'; return }
@@ -251,7 +250,7 @@ async function bloat() {
     (d < 30 ? 'ดีมาก ภาระของเครือข่ายแทบไม่ทำให้หน่วงเพิ่ม' : d < 60 ? 'พอรับได้' : 'มี Bufferbloat: ตอนมีคนโหลดไฟล์ ความหน่วงพุ่ง เกมและวิดีโอคอลจะกระตุก แนะนำเปิด QoS/SQM ที่เราเตอร์')
 }
 
-// ---------- ประวัติ + เปรียบเทียบตามประเภทการทดสอบ ----------
+//ประวัติ + เปรียบเทียบตามประเภทการทดสอบ
 async function hist() {
   const o = $('histOut'); o.innerHTML = '';
   const tb = (rows, head) => {
@@ -270,7 +269,7 @@ async function hist() {
 }
 $('bloatBtn').onclick = bloat; $('histBtn').onclick = hist;
 
-// ---------- Wi-Fi Heatmap ----------
+//Wi-Fi Heatmap
 let HEAT_SEC = 10, heatSel = null; const HEAT = {}, cells = {};
 (function () {
   const g = $('heatGrid'); for (let r = 0; r < 3; r++)for (let c = 1; c <= 4; c++) {
@@ -293,7 +292,7 @@ async function heatMeasure() {
   o.textContent = `ช่อง ${id}: QoE ${q.score} (${PROFILES[prof].n}) RTT ${m.rtt.toFixed(0)} ms, Jitter ${m.jit.toFixed(1)} ms, Loss ${m.loss.toFixed(1)}%`
 }
 
-// ---------- เครื่องมือเครือข่าย ----------
+//เครื่องมือเครือข่าย
 async function upTest() {
   const o = $('toolOut'); o.textContent = 'กำลังอัปโหลด 2 MB…';
   const body = new Uint8Array(2e6), t = performance.now();
@@ -323,7 +322,7 @@ $('heatBtn').onclick = heatMeasure;
 $('heatClr').onclick = () => { for (const k in cells) { cells[k].style.background = ''; cells[k].style.color = ''; cells[k].textContent = k; delete HEAT[k] } $('heatOut').textContent = '' };
 $('upBtn').onclick = upTest; $('bdBtn').onclick = breakdown; $('trClient').onclick = () => trace('client'); $('trNet').onclick = () => trace('internet'); $('prBtn').onclick = () => window.print();
 
-// ---------- หลาย client: ส่งผลสดไปให้ Live Dashboard ----------
+//หลาย client: ส่งผลสดไปให้ Live Dashboard
 const CID = (() => { const rnd = () => Math.random().toString(36).slice(2, 10); try { let v = localStorage.getItem('qoeId'); if (!v) { v = rnd(); localStorage.setItem('qoeId', v) } return v } catch (e) { return rnd() } })();
 function cname() { return (($('cname').value || '').trim()) || 'เครื่อง-' + CID.slice(0, 4) }
 function sendLive(x) {

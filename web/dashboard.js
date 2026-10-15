@@ -1,6 +1,6 @@
 const $ = id => document.getElementById(id);
 const APP = { video: 'Video', call: 'Voice/Video Call', game: 'Online Gaming', file: 'File Transfer' }, TYP = { local: 'Local', net: 'Internet', mob: 'Mobility' };
-const rate = s => s >= 70 ? 'good' : s >= 50 ? 'fair' : 'poor', H = {};   // H = ประวัติ RTT ของแต่ละเครื่อง
+const rate = s => s >= 70 ? 'good' : s >= 50 ? 'fair' : 'poor', H = {};  
 const f = (v, d = 0) => v == null ? '-' : v.toFixed(d);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function txt(tag, t, cls, st) { const e = document.createElement(tag); e.textContent = t; if (cls) e.className = cls; if (st) Object.assign(e.style, st); return e }
