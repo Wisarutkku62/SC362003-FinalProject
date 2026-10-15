@@ -5,7 +5,7 @@
 """
 import argparse, select, socket, struct, time
 
-HDR = struct.Struct("!Id")  # เลขลำดับแพ็กเก็ต + เวลาส่ง
+HDR = struct.Struct("!Id") 
 
 
 def server(port):
@@ -15,8 +15,8 @@ def server(port):
     while True:
         try:
             data, addr = s.recvfrom(2048)
-            s.sendto(data, addr)          # สะท้อนกลับทันที
-        except ConnectionResetError:      # Windows: ฝั่ง client ปิดไปแล้ว
+            s.sendto(data, addr)       
+        except ConnectionResetError:      
             continue
 
 
@@ -55,7 +55,7 @@ def client(host, port, count, interval, size):
     for i in range(count):
         s.sendto(HDR.pack(i, time.perf_counter()) + pad, (host, port))
         drain(max(0, t0 + (i + 1) * interval - time.perf_counter()))
-    drain(1.0)  # รอแพ็กเก็ตที่ตามมาช้า
+    drain(1.0) 
 
     rtts = [got[k] for k in sorted(got)]
     if not rtts:

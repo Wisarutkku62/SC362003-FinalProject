@@ -18,12 +18,12 @@ def db():
     return c
 
 
-@app.get("/ping")            # ใช้วัด RTT / Jitter / Loss (ตอบเร็วที่สุด ตัวเล็กที่สุด)
+@app.get("/ping")            
 def ping():
     return JSONResponse({"t": time.time()}, headers=NOCACHE)
 
 
-@app.get("/download")        # ใช้วัด Throughput ขาลง (ไบต์สุ่ม กัน compression)
+@app.get("/download") 
 def download(size: int = Query(500_000, ge=1, le=20_000_000)):
     chunk = os.urandom(65536)
 
@@ -38,7 +38,7 @@ def download(size: int = Query(500_000, ge=1, le=20_000_000)):
                              headers={**NOCACHE, "Content-Length": str(size)})
 
 
-@app.post("/upload")         # ใช้วัด Throughput ขาขึ้น (client วัดเวลาเอง)
+@app.post("/upload")  
 async def upload(request: Request):
     n = 0
     async for c in request.stream():
@@ -46,35 +46,35 @@ async def upload(request: Request):
     return {"bytes": n}
 
 
-@app.post("/api/results")    # เก็บรายงานหลังจบการทดสอบ
+@app.post("/api/results") 
 async def save(request: Request):
     data = await request.json()
-    data["ip"] = request.client.host            # บันทึกว่าเครื่องไหนส่งมา
+    data["ip"] = request.client.host         
     data["name"] = str(data.get("name", ""))[:30]
     with db() as c:
         c.execute("insert into results(ts,data) values(?,?)", (time.time(), json.dumps(data)))
     return {"ok": True}
 
 
-@app.get("/api/results")     # ดูประวัติย้อนหลัง
+@app.get("/api/results")    
 def history(limit: int = 20):
     with db() as c:
         rows = c.execute("select id,ts,data from results order by id desc limit ?", (limit,)).fetchall()
     return [{"id": i, "ts": t, **json.loads(d)} for i, t, d in rows]
 
 
-@app.get("/api/traceroute")  # แสดงเส้นทาง (hop) จากเซิร์ฟเวอร์ไปยังเครื่องผู้ใช้ หรือไปอินเทอร์เน็ต
+@app.get("/api/traceroute")
 def traceroute(request: Request, target: str = "client"):
     ip = request.client.host if target == "client" else "1.1.1.1"
     try:
-        ipaddress.ip_address(ip)          # ตรวจว่าเป็น IP จริง กัน command injection
+        ipaddress.ip_address(ip) 
     except ValueError:
         return {"error": "IP ไม่ถูกต้อง"}
     if platform.system() == "Windows":
         cmd = ["tracert", "-d", "-h", "12", "-w", "1000", ip]
     else:
         cmd = ["traceroute", "-n", "-m", "12", "-w", "1", ip]
-    try:                                  # ส่งเป็น list ไม่ผ่าน shell
+    try:                            
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=45).stdout
     except FileNotFoundError:
         return {"error": "ไม่พบคำสั่ง traceroute บนเซิร์ฟเวอร์"}
@@ -84,13 +84,13 @@ def traceroute(request: Request, target: str = "client"):
     return {"target": ip, "hops": hops}
 
 
-PORT = int(os.environ.get("QOE_PORT", "8000"))   # ใช้แสดงในข้อความตอนเริ่ม (ถ้ารันพอร์ตอื่นให้ตั้งตัวแปรนี้)
+PORT = int(os.environ.get("QOE_PORT", "8000"))  
 
 
 def lan_ips():
     """หา IP ของเครื่องนี้ในวง LAN อัตโนมัติ (ไม่ต้องพิมพ์ ipconfig เอง)"""
     ips, primary = set(), None
-    try:                                   # ทริค: ไม่ได้ส่งข้อมูลจริง แค่ให้ระบบเลือกการ์ดเครือข่ายหลัก
+    try:                                   
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("10.255.255.255", 1))
         primary = s.getsockname()[0]
@@ -104,7 +104,7 @@ def lan_ips():
     except OSError:
         pass
     rest = sorted(i for i in ips if not i.startswith("127.") and i != primary)
-    return ([primary] if primary and not primary.startswith("127.") else []) + rest   # IP หลักมาก่อนเสมอ
+    return ([primary] if primary and not primary.startswith("127.") else []) + rest   
 
 
 def qr_svg(text):
@@ -119,7 +119,7 @@ def qr_svg(text):
 
 
 @app.on_event("startup")
-def banner():                              # พิมพ์ที่อยู่ให้เองทุกครั้งที่เปิดเซิร์ฟเวอร์
+def banner():                           
     ips = lan_ips()
     print("\n=== เปิดจากเครื่องอื่นในเครือข่ายเดียวกัน ===")
     for ip in ips:
@@ -136,7 +136,7 @@ PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=
 <h2>สแกนเพื่อเปิด QoS/QoE Analytics</h2><p>มือถือหรือเครื่องอื่นต้องต่อเครือข่ายเดียวกับเครื่องนี้ (ยกเว้นลิงก์สาธารณะ) ที่อยู่เปลี่ยนเองอัตโนมัติถ้า IP เปลี่ยน แค่เปิดหน้านี้ใหม่</p><div class=g>@@CARDS@@</div>"""
 
 
-@app.get("/qr")                            # หน้ารวม QR ของทุกที่อยู่ที่เปิดได้
+@app.get("/qr")                          
 def qr_page(request: Request):
     port = request.url.port or PORT
     items = [(f"http://{ip}:{port}", "ที่อยู่ IP ในวง LAN") for ip in lan_ips()]
@@ -150,7 +150,7 @@ def qr_page(request: Request):
     return HTMLResponse(PAGE.replace("@@CARDS@@", cards))
 
 
-LIVE = {}   # เครื่องที่กำลังทดสอบอยู่ (เก็บในหน่วยความจำ หายเมื่อรีสตาร์ท)
+LIVE = {}  
 
 
 def num(x):
@@ -160,7 +160,7 @@ def num(x):
         return None
 
 
-@app.post("/api/live")        # client ส่งผลสดมาทุกวินาที
+@app.post("/api/live")       
 async def live_post(request: Request):
     d = await request.json()
     cid = str(d.get("id", ""))[:40]
@@ -170,12 +170,12 @@ async def live_post(request: Request):
                  "profile": str(d.get("profile", ""))[:10], "test": str(d.get("test", ""))[:10],
                  "rating": str(d.get("rating") or "")[:5], "seen": time.time(),
                  **{k: num(d.get(k)) for k in ("rtt", "jit", "loss", "tp", "qoe")}}
-    for k in sorted(LIVE, key=lambda k: LIVE[k]["seen"])[:-200]:   # เก็บไม่เกิน 200 เครื่อง
+    for k in sorted(LIVE, key=lambda k: LIVE[k]["seen"])[:-200]:   
         del LIVE[k]
     return {"ok": True}
 
 
-@app.get("/api/live")         # หน้า dashboard ดึงไปแสดง
+@app.get("/api/live")         
 def live_get():
     now = time.time()
     for k in [k for k, v in LIVE.items() if now - v["seen"] > 30]:
@@ -183,5 +183,4 @@ def live_get():
     return [{**v, "age": round(now - v["seen"], 1)} for v in LIVE.values()]
 
 
-# ต้องอยู่ท้ายสุด เพื่อไม่ให้บังเส้นทาง API ด้านบน
 app.mount("/", StaticFiles(directory=os.path.join(BASE, "..", "web"), html=True), name="web")
